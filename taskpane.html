@@ -14,7 +14,6 @@
          font: 13px "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif; }
   header { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-bottom: 1px solid var(--line); }
   #address { font-weight: 600; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  label { color: var(--muted); white-space: nowrap; }
   button { font: inherit; padding: 2px 10px; }
   #paste { display: none; height: 30%; margin: 8px; font: 12px ui-monospace, Menlo, Consolas, monospace; }
   #view { flex: 1; border: 0; width: 100%; background: #fff; }
@@ -24,7 +23,6 @@
 <body>
 <header>
   <span id="address">Select a cell</span>
-  <label><input type="checkbox" id="remote"> Remote images</label>
   <button id="refresh" type="button">Refresh</button>
 </header>
 <textarea id="paste" placeholder="Not running in Excel. Paste HTML here to preview it."></textarea>
@@ -35,31 +33,45 @@
 "use strict";
 const $ = (id) => document.getElementById(id);
 let seq = 0;
-let current = "";
 
-// Links open nothing (the sandbox blocks popups) but keep their URL visible on hover.
+// Links open nothing (the sandbox blocks popups). tabindex makes a click focus the
+// link on Mac too, which shows the CSS banner below with the link's address.
 DOMPurify.addHook("afterSanitizeAttributes", (node) => {
   if (node.hasAttribute("href")) {
     node.setAttribute("target", "_blank");
+    node.setAttribute("tabindex", "0");
     node.setAttribute("title", node.getAttribute("href"));
   }
 });
 
-function buildDocument(html, allowRemote) {
+// No scripts run in the frame, so the click feedback is pure CSS.
+const LINK_BANNER = `<style>
+a[href]:focus::after {
+  content: "Links are disabled in the preview: " attr(href) !important;
+  position: fixed !important; left: 8px !important; right: 8px !important; bottom: 8px !important;
+  z-index: 2147483647 !important; padding: 8px 12px !important; border-radius: 6px !important;
+  background: #323130 !important; color: #fff !important; box-shadow: 0 2px 8px rgba(0,0,0,.3) !important;
+  font: 13px/1.4 "Segoe UI", -apple-system, sans-serif !important; text-decoration: none !important;
+  white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;
+  animation: link-banner 4s forwards !important;
+}
+@keyframes link-banner { 0%, 85% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
+</style>`;
+
+function buildDocument(html) {
   const clean = DOMPurify.sanitize(html, { WHOLE_DOCUMENT: true });
-  const remote = allowRemote ? " https:" : "";
-  // Defence in depth: even if something survived sanitising, nothing can load or run.
+  // Defence in depth: even if something survived sanitising, nothing can run or
+  // connect out. Only images, fonts and media may load.
   const csp = "default-src 'none'; style-src 'unsafe-inline'; " +
-              `img-src data:${remote}; font-src data:${remote}; media-src data:${remote}`;
-  const head = `<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="${csp}">`;
+              "img-src data: https:; font-src data: https:; media-src data: https:";
+  const head = `<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="${csp}">${LINK_BANNER}`;
   return clean.replace("<head>", "<head>" + head);
 }
 
 function show(value, address) {
-  current = value;
   $("address").textContent = address || "";
   const text = value == null ? "" : String(value);
-  $("view").srcdoc = buildDocument(text, $("remote").checked);
+  $("view").srcdoc = buildDocument(text);
   $("status").textContent = text ? `${text.length.toLocaleString()} characters` : "Cell is empty";
 }
 
@@ -76,12 +88,6 @@ async function readActiveCell() {
     $("status").textContent = "Could not read cell: " + e.message;
   }
 }
-
-try { $("remote").checked = localStorage.getItem("remote") === "1"; } catch (e) {}
-$("remote").addEventListener("change", () => {
-  try { localStorage.setItem("remote", $("remote").checked ? "1" : "0"); } catch (e) {}
-  show(current, $("address").textContent);
-});
 
 Office.onReady(({ host }) => {
   if (host !== Office.HostType.Excel) {

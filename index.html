@@ -65,14 +65,14 @@ New-ItemProperty -Path $key -Name "fd002e3c-eb36-42cf-8c68-96dbc1c3fc8b" -Value 
   <h2>Using it</h2>
   <ul>
     <li>Click <b>HTML Preview</b> on the Home tab to open the pane. Select any cell and the pane shows its HTML rendered. The pane follows your selection and updates when the cell changes. Formulas are fine: the pane shows the formula's result.</li>
-    <li><b>Remote images</b> is off by default, so opening a cell never contacts outside servers. Turn it on to load images and fonts from <code>https://</code> addresses.</li>
-    <li>Links are shown (hover to see the address) but do not open.</li>
+    <li>Images, fonts and media load from <code>https://</code> addresses, so the remote server can see that the content was viewed.</li>
+    <li>Links do not open. Clicking one shows a banner with its address.</li>
   </ul>
 
   <h2>Safety</h2>
   <ul>
     <li>The HTML is cleaned with <a href="https://github.com/cure53/DOMPurify">DOMPurify</a>, which removes <code>&lt;script&gt;</code>, <code>&lt;iframe&gt;</code>, <code>&lt;object&gt;</code>, event handlers such as <code>onclick</code>, and <code>javascript:</code> links.</li>
-    <li>The cleaned HTML is then shown in a sandboxed frame with scripts, forms, pop-ups and navigation disabled, and a content security policy that blocks all network access (except remote images, if you turn them on).</li>
+    <li>The cleaned HTML is then shown in a sandboxed frame with scripts, forms, pop-ups and navigation disabled, and a content security policy that blocks all network access except loading images, fonts and media.</li>
     <li>The add-in only has permission to read the workbook. Cell contents never leave your computer.</li>
   </ul>
 
