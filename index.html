@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HTML Cell Preview for Excel</title>
+<link rel="icon" href="assets/icon-32.png">
+<style>
+  :root { color-scheme: light dark; --bg: #fff; --fg: #1f2328; --muted: #59636e; --card: #f6f8fa; --line: #d1d9e0; --accent: #217346; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #0d1117; --fg: #e6edf3; --muted: #9198a1; --card: #161b22; --line: #30363d; --accent: #3fb57a; } }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.55 "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { display: flex; align-items: center; gap: 12px; margin: 0 0 4px; font-size: 28px; }
+  h2 { margin-top: 40px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+  .lede { color: var(--muted); margin-top: 0; }
+  .cmd { position: relative; }
+  pre { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px; overflow-x: auto;
+        font: 13px/1.5 ui-monospace, Menlo, Consolas, monospace; white-space: pre; }
+  .cmd button { position: absolute; top: 8px; right: 8px; font: 13px inherit; padding: 4px 10px; border-radius: 6px;
+                border: 1px solid var(--line); background: var(--bg); color: var(--fg); cursor: pointer; }
+  code { font: 0.9em ui-monospace, Menlo, Consolas, monospace; }
+  li { margin: 4px 0; }
+  .note { color: var(--muted); font-size: 14px; }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <h1><img src="assets/icon-64.png" width="40" height="40" alt="">HTML Cell Preview</h1>
+  <p class="lede">An Excel add-in for Windows and Mac. Select a cell containing HTML and see it rendered in a side pane, using a modern browser engine, with scripts and other active content removed.</p>
+
+  <h2>Install on Windows</h2>
+  <ol>
+    <li>Close Excel.</li>
+    <li>Open <b>PowerShell</b> from the Start menu (no administrator rights needed).</li>
+    <li>Paste the commands below and press Enter.</li>
+    <li>Start Excel. The <b>HTML Preview</b> button appears on the <b>Home</b> tab.</li>
+  </ol>
+  <div class="cmd"><button type="button">Copy</button><pre>$dir = "$env:LOCALAPPDATA\ExcelHtmlCellPreview"
+New-Item -ItemType Directory -Force -Path $dir | Out-Null
+Invoke-WebRequest -UseBasicParsing "https://sylumer.github.io/excel-html-cell-preview/manifest.xml" -OutFile "$dir\manifest.xml"
+$key = "HKCU:\Software\Microsoft\Office\16.0\WEF\Developer"
+if (-not (Test-Path $key)) { New-Item -Path $key -Force | Out-Null }
+New-ItemProperty -Path $key -Name "fd002e3c-eb36-42cf-8c68-96dbc1c3fc8b" -Value "$dir\manifest.xml" -PropertyType String -Force | Out-Null
+"Installed. Start Excel."</pre></div>
+  <p class="note">What this does: saves a copy of the add-in's manifest to your user profile and adds one entry under your own registry hive (<code>HKEY_CURRENT_USER</code>) telling Excel where it is. Nothing is installed system-wide.</p>
+
+  <h2>Install on Mac</h2>
+  <ol>
+    <li>Quit Excel.</li>
+    <li>Open <b>Terminal</b> (Applications &rarr; Utilities).</li>
+    <li>Paste the command below and press Return.</li>
+    <li>Start Excel. The <b>HTML Preview</b> button appears on the <b>Home</b> tab.</li>
+  </ol>
+  <div class="cmd"><button type="button">Copy</button><pre>d=~/Library/Containers/com.microsoft.Excel/Data/Documents/wef; mkdir -p "$d" &amp;&amp; curl -fsSL https://sylumer.github.io/excel-html-cell-preview/manifest.xml -o "$d/excel-html-cell-preview.xml" &amp;&amp; echo "Installed. Start Excel."</pre></div>
+  <p class="note">What this does: copies the add-in's manifest into Excel's own add-ins folder.</p>
+
+  <h2>If the button does not appear</h2>
+  <ul>
+    <li>Go to <b>Home &rarr; Add-ins</b> (or <b>Insert &rarr; My Add-ins</b> on older versions) and choose <b>HTML Cell Preview</b> under <b>Developer Add-ins</b>. After the first time, the button stays on the ribbon.</li>
+    <li>Make sure Excel was fully closed when you ran the install, then restart it.</li>
+    <li>Your network must be able to reach <code>sylumer.github.io</code> and <code>appsforoffice.microsoft.com</code>.</li>
+  </ul>
+
+  <h2>Using it</h2>
+  <ul>
+    <li>Click <b>HTML Preview</b> on the Home tab to open the pane. Select any cell and the pane shows its HTML rendered. The pane follows your selection and updates when the cell changes. Formulas are fine: the pane shows the formula's result.</li>
+    <li><b>Remote images</b> is off by default, so opening a cell never contacts outside servers. Turn it on to load images and fonts from <code>https://</code> addresses.</li>
+    <li>Links are shown (hover to see the address) but do not open.</li>
+  </ul>
+
+  <h2>Safety</h2>
+  <ul>
+    <li>The HTML is cleaned with <a href="https://github.com/cure53/DOMPurify">DOMPurify</a>, which removes <code>&lt;script&gt;</code>, <code>&lt;iframe&gt;</code>, <code>&lt;object&gt;</code>, event handlers such as <code>onclick</code>, and <code>javascript:</code> links.</li>
+    <li>The cleaned HTML is then shown in a sandboxed frame with scripts, forms, pop-ups and navigation disabled, and a content security policy that blocks all network access (except remote images, if you turn them on).</li>
+    <li>The add-in only has permission to read the workbook. Cell contents never leave your computer.</li>
+  </ul>
+
+  <h2>Uninstall</h2>
+  <p>Windows (PowerShell):</p>
+  <div class="cmd"><button type="button">Copy</button><pre>Remove-ItemProperty -Path "HKCU:\Software\Microsoft\Office\16.0\WEF\Developer" -Name "fd002e3c-eb36-42cf-8c68-96dbc1c3fc8b" -ErrorAction SilentlyContinue
+Remove-Item "$env:LOCALAPPDATA\ExcelHtmlCellPreview" -Recurse -Force -ErrorAction SilentlyContinue
+"Removed. Restart Excel."</pre></div>
+  <p>Mac (Terminal):</p>
+  <div class="cmd"><button type="button">Copy</button><pre>rm -f ~/Library/Containers/com.microsoft.Excel/Data/Documents/wef/excel-html-cell-preview.xml &amp;&amp; echo "Removed. Restart Excel."</pre></div>
+
+  <p class="note">Source: <a href="https://github.com/sylumer/excel-html-cell-preview">github.com/sylumer/excel-html-cell-preview</a></p>
+</main>
+<script>
+  document.querySelectorAll(".cmd button").forEach((b) => b.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(b.nextElementSibling.textContent);
+      b.textContent = "Copied";
+    } catch (e) {
+      b.textContent = "Select and copy";
+    }
+    setTimeout(() => (b.textContent = "Copy"), 2000);
+  }));
+</script>
+</body>
+</html>
