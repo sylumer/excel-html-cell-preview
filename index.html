@@ -50,7 +50,8 @@ New-ItemProperty -Path $key -Name "fd002e3c-eb36-42cf-8c68-96dbc1c3fc8b" -Value 
     <li>Quit Excel.</li>
     <li>Open <b>Terminal</b> (Applications &rarr; Utilities).</li>
     <li>Paste the command below and press Return.</li>
-    <li>Start Excel. The <b>HTML Preview</b> button appears on the <b>Home</b> tab.</li>
+    <li>Start Excel and open a workbook.</li>
+    <li>Go to <b>Home &rarr; Add-ins</b> and choose <b>HTML Cell Preview</b> (listed under <b>Developer Add-ins</b>). This is needed once: the <b>HTML Preview</b> button then stays on the <b>Home</b> tab.</li>
   </ol>
   <div class="cmd"><button type="button">Copy</button><pre>d=~/Library/Containers/com.microsoft.Excel/Data/Documents/wef; mkdir -p "$d" &amp;&amp; curl -fsSL https://sylumer.github.io/excel-html-cell-preview/manifest.xml -o "$d/excel-html-cell-preview.xml" &amp;&amp; echo "Installed. Start Excel."</pre></div>
   <p class="note">What this does: copies the add-in's manifest into Excel's own add-ins folder.</p>
